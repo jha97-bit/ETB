@@ -1,0 +1,28 @@
+# Guardrail Policy for Mock Interview AI
+# Ensures ethical, psychologically safe interactions
+
+safety:
+  - type: toxicity
+    action: block
+    description: Block toxic, harassing, or abusive content
+  - type: bias
+    action: flag
+    description: Flag content that may reinforce stereotypes or bias
+  - type: pii
+    action: redact
+    description: Avoid collecting unnecessary personal identifiable information
+
+disallowed_questions:
+  - "What is your age?"
+  - "Are you married?"
+  - "Do you have children?"
+  - "What is your religion?"
+  - "What is your political affiliation?"
+  - "Where are you from?" # when used to infer nationality/ethnicity
+  - "Do you have any disabilities?"
+
+feedback_rules:
+  - Feedback must be constructive and supportive
+  - Never use harsh or demeaning language
+  - Focus on growth, not criticism
+  - Provide actionable improvement suggestions

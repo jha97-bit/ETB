@@ -1,0 +1,22 @@
+role: technical
+dimensions:
+  - name: accuracy
+    weight: 0.3
+    max_score: 5
+    description: "Is the technical content correct?"
+  - name: depth
+    weight: 0.25
+    max_score: 5
+    description: "Does the response demonstrate sufficient technical depth?"
+  - name: clarity
+    weight: 0.2
+    max_score: 5
+    description: "Is the explanation clear and well-structured?"
+  - name: problem_solving
+    weight: 0.15
+    max_score: 5
+    description: "Does the candidate show logical problem-solving approach?"
+  - name: practicality
+    weight: 0.1
+    max_score: 5
+    description: "Are the suggestions practical and implementable?"

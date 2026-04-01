@@ -1,0 +1,32 @@
+cases:
+  - id: c1_credit_card
+    title: New Credit Card Partners
+    tags: [business_analytics, product_management, data_science]
+    scenario: |
+      A credit card company (C1) is considering launching a new co-branded credit card
+      with a large consumer partner (for example, a ride‑sharing platform).
+      The goal is to evaluate whether this partnership is attractive and, if so,
+      under what economics (pricing, rewards, marketing spend, and customer acquisition).
+    core_question: |
+      If we are going to produce a new credit card type and are seeking a cooperation
+      partnership company to produce and launch together, how would you evaluate
+      the partnership? Beyond pure financials, what factors would you focus on?
+    good_approach:
+      - Frame the objective clearly (e.g., grow profit, cardholder base, or engagement) and identify key stakeholders on both sides.
+      - Break evaluation into structured lenses: partner company (brand, reputation, product fit), customers (size, overlap, spending power, frequency), product design (rewards, fees, usage incentives), and competition (existing similar cards, market dynamics).
+      - Build a simple but explicit economic model: revenue per card (fees + interest), variable costs (fraud, rewards, servicing), and fixed / marketing costs; use the given numbers to compute profit.
+      - Analyze unit economics and scale: profit per card, breakeven volume, and how many new customers are required to reach a target profit.
+      - Consider behavioral aspects such as “gamers” who only take the promotion and churn; incorporate their impact into the model and discuss mitigations.
+      - Discuss risks and next steps (e.g., sensitivity analysis on assumptions, pilot tests, alternative promo structures).
+    common_mistakes:
+      - Jumping straight into arithmetic without first clarifying goals and constraints.
+      - Ignoring customer overlap and fit (treating all potential partner customers as equally valuable).
+      - Focusing only on revenue and forgetting costs like fraud prevention, rewards, or incremental customer service.
+      - Not considering the impact of gamers / free‑riders on profitability and customer quality.
+      - Providing a yes/no recommendation without discussing risks, scenarios, or validation steps.
+    suggested_followups:
+      - How would your recommendation change if a large portion of new customers are “gamers” who churn quickly?
+      - How would you estimate the realistic number of new cardholders from this partnership?
+      - What metrics would you track post‑launch to decide whether to expand or shut down the partnership?
+      - How would you compare this partnership to an alternative partner opportunity?
+

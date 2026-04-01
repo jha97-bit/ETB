@@ -1,0 +1,152 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2868
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\froman\fcharset0 TimesNewRomanPS-BoldMT;\f1\froman\fcharset0 TimesNewRomanPSMT;\f2\fswiss\fcharset0 Helvetica;
+\f3\fswiss\fcharset0 ArialMT;}
+{\colortbl;\red255\green255\blue255;\red51\green51\blue51;\red0\green0\blue0;\red44\green100\blue22;
+}
+{\*\expandedcolortbl;;\csgray\c25900;\csgray\c0;\cspthree\c27867\c45338\c16857;
+}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\b\fs28\fsmilli14040 \cf2 New Credit Card Partners: 
+\f1\b0\fs24 \cf3 If we are going to produce new credit card type, we are\
+seeking a cooperation partnership company to produce and launch together. How to evaluate\
+the partnership company? If not from the financial side, what the factors you will focus to\
+evaluate?\
+
+\f2 Launching a New Credit Card: Factors to Consider?\
+
+\f1\fs22\fsmilli11040 1.
+\f3  
+\f1 company: industry, financial stability, reputation\
+2.
+\f3  
+\f1 customer: how many customer, purchase power, overlap with C1 customers,\
+3.
+\f3  
+\f1 product: types, reward options, key measurements\
+4.
+\f3  
+\f1 competitor: the market dynamic, similar products\
+
+\f2\fs24 1.
+\f3  
+\f2 500,000 active credit card, 
+\fs22\fsmilli11040 $79 annual member fee,\
+
+\fs24 Interest revenue would be 15$ per card per month,\
+Cost for prevent fraud would be $5 per card per month.\
+What is the profit we will have?\
+-
+\f3  
+\f2 Revenue Per Card: $79 Annual Fee + $15 x 12 Annual Interest = $259\
+-
+\f3  
+\f2 Cost Per Card: $5 x 12 Annual Fraud Cost = $60.\
+-
+\f3  
+\f2 Profit = Revenue - Cost = ($259 - $60) x 500,000 customers = \cf4 99.5M\
+\cf3 Rev:\
+# of card holders * (annual + interest * 12)\
+500k * (79 + 15 * 12)\
+= 129.5M\
+Cost:\
+# of card holders * (fraud cost * 12)\
+= 500k * (5 * 12)\
+= 30M\
+Profit:\
+Rev - Cost\
+129.5M - 30M = 99.5M\
+Insight: The estimated profit is 99.5M, which means this is a good business opportunity.\
+2.
+\f3  
+\f2 Factors to Consider When Partnering with Another Company, Such as Uber\
+product: reward type: miles, points, or cash back\
+customer: profile, size, overlap, shop frequency\
+resources: default payment, ad placement\
+profitability:\
+-
+\f3  
+\f2 rev: expected applicant, expected revenue\
+-
+\f3  
+\f2 cost: commission, operation, discount and coupons\cf0 \page \cf3 3.
+\f3  
+\f2 40/year/customer (some discount for 3 rides, but this number should not be important)\
+The marketing cost is 11.8 million. How many new customers need to be added to achieve\
+the profit asked in Q2?\
+Target Profit = 99.5M\
+Revenue Per Card = $259\
+Cost = $60 Annual Fraud Cost + $40 Annual Customer Cost = $100\
+Assume increase n million customer\
+99.5M = ($259 - $100) x (0.5M + n) - 11.8M \cf4 n = 0.2M\
+\cf3 target profit = 99.5M\
+new cust as N\
+rev:\
+# of card holders * (annual + interest * 12)\
+N * (79 + 15 * 12)\
+= 259N\
+variable cost:\
+# of card holders * (fraud cost * 12 + new variable cost)\
+N * (5 * 12 + 40)\
+= 100N\
+fixed cost:\
+11.8M\
+rev - variable cost - fixed cost = 99.5M\
+259N - 100N - 11.8M = 99.5M\
+159N = 111.3M\
+N = 700K\
+new cust: 700k - 500k = 200k\
+Insights: we should increase the new customer of 200k, which is about 40% increase\
+from the original 500k customers.\
+4.
+\f3  
+\f2 If 25% of these new customers are gamers (he explained that they only use the\
+partnered discount and stop using the card after that), how many new customers need to\
+be added to achieve the profit in Q2?\
+set the number of new customer as A\
+(500K + (1-25%)A) * (79+15*12-5*12) - 40*(500K+A) - 11.8M = 99.5M\
+A = 291,743 ~ 291k\cf0 \page \cf3 Clarifying questions:\
+For the gamers, do we count the fraud cost?\
+original rev:\
+# of original customers * (annual + interest * 12)\
+500K * (79 + 15*12)\
+original cost:\
+# of original customers * (promo + fraud * 12)\
+500k * (40 + 5* 12)\
+new rev:\
+# of new customers * (1-20%) * (annual + interest * 12)\
+0.75A * (79 + 15*12)\
+new cost:\
+# of new customers * (1-20%) * (annual + interest * 12)\
+0.75A * (40 + 5* 12)\
+# of new customers * 20% * promo\
+0.25A * 40\
+original rev + new rev - orginal cost - new cost - gamer cost - fixed cost = 99.5M\
+500K * (79 + 15*12) + 0.75A * (79 + 15*12) - 500k * (40 + 5* 12) - 0.75A * (40 + 5* 12) -\
+0.25A * 40 - 11.8M = 99.5M\
+129.5M + 194.25A - 50M - 75A - 10A - 11.8M = 99.5M\
+A = 291076\
+Insight: we have to increase arbout 291k new cardholders.It is about 58% more than the\
+original cardholder, which seems like an anchieveable number.\
+5.
+\f3  
+\f2 Should we collaborate?\
+Conclusion: Yes, we can collaborate with the ride-share platform with no promotions.\
+Supporting: If we collaborate with the ride-share platform with no promos, we can earn\
+the profit of 99.5M.\
+Risks: free-rirders or gamers\
+Next step: other promotion strategy\
+6.
+\f3  
+\f2 "A portion of customers only use the benefits after applying for the card and do not make\
+purchases with the card (gamers). Do you have any suggestions?"\
+1.
+\f3  
+\f2 product deliversification\
+2.
+\f3  
+\f2 annual fee charges\
+3.
+\f3  
+\f2 improve customer service}

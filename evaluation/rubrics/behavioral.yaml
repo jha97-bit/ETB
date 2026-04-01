@@ -1,0 +1,22 @@
+role: behavioral
+dimensions:
+  - name: clarity
+    weight: 0.2
+    max_score: 5
+    description: "How clearly and concisely does the candidate communicate?"
+  - name: structure
+    weight: 0.25
+    max_score: 5
+    description: "Does the response follow STAR (Situation, Task, Action, Result)?"
+  - name: relevance
+    weight: 0.2
+    max_score: 5
+    description: "How well does the example match the question asked?"
+  - name: impact
+    weight: 0.2
+    max_score: 5
+    description: "Does the candidate quantify or demonstrate measurable impact?"
+  - name: reflection
+    weight: 0.15
+    max_score: 5
+    description: "Does the candidate show self-awareness and learning?"

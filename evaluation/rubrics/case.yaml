@@ -1,0 +1,22 @@
+role: case
+dimensions:
+  - name: problem_definition
+    weight: 0.2
+    max_score: 5
+    description: "Does the candidate clearly frame the business problem, goals, and stakeholders?"
+  - name: data_strategy
+    weight: 0.25
+    max_score: 5
+    description: "Do they propose relevant data sources, metrics, and experiments (e.g., A/B tests, cohorts, funnels)?"
+  - name: analytical_rigor
+    weight: 0.25
+    max_score: 5
+    description: "Is their reasoning structured, hypothesis-driven, and grounded in sound analytical methods?"
+  - name: business_impact
+    weight: 0.15
+    max_score: 5
+    description: "Do they connect insights to clear product or business decisions and trade-offs?"
+  - name: communication
+    weight: 0.15
+    max_score: 5
+    description: "Is the explanation clear, concise, and tailored to non-technical stakeholders?"

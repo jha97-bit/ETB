@@ -1,0 +1,22 @@
+role: testcases
+dimensions:
+  - name: coverage
+    weight: 0.25
+    max_score: 5
+    description: "Does the candidate cover core flows plus meaningful edge/negative cases?"
+  - name: risk_prioritization
+    weight: 0.2
+    max_score: 5
+    description: "Do they prioritize high-risk areas and explain trade-offs under time constraints?"
+  - name: techniques
+    weight: 0.2
+    max_score: 5
+    description: "Do they apply sound test-design techniques (BVA, equivalence classes, state/decision tables, exploratory)?"
+  - name: clarity
+    weight: 0.2
+    max_score: 5
+    description: "Are test cases structured, unambiguous, and easy to execute/reproduce?"
+  - name: automation_strategy
+    weight: 0.15
+    max_score: 5
+    description: "Do they propose a sensible automation approach (levels, tooling, maintainability, flake reduction)?"

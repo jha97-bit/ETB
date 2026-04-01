@@ -1,0 +1,17 @@
+[
+  {
+    "session_id": "web-session",
+    "reason": "Response contains potentially harmful content.",
+    "type": "response_blocked"
+  },
+  {
+    "session_id": "web-session",
+    "reason": "Response contains potentially harmful content.",
+    "type": "response_blocked"
+  },
+  {
+    "session_id": "web-session",
+    "reason": "Response contains potentially harmful content.",
+    "type": "response_blocked"
+  }
+]
