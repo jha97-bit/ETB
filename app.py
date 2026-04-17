@@ -353,6 +353,7 @@ st.set_page_config(
     page_title="Mock Interview Platform",
     page_icon="🎤",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 # Custom styling — professional layout, sidebar interview types (caps + small desc)
@@ -385,10 +386,7 @@ st.markdown("""
         background: linear-gradient(165deg, #f8fafc 0%, #eef2f7 45%, #f1f5f9 100%);
         color: var(--text-primary);
     }
-    /* Hide Streamlit top chrome for cleaner look */
-    header[data-testid="stHeader"],
-    [data-testid="stToolbar"],
-    [data-testid="stDecoration"],
+    /* Keep Streamlit header visible so sidebar toggle remains accessible */
     #MainMenu,
     .stAppDeployButton,
     [data-testid="stStatusWidget"] {
