@@ -150,6 +150,29 @@ def _html_escape(s: str) -> str:
     )
 
 
+def _render_page_header(mode=None) -> None:
+    """Consistent top header shown across all app states."""
+    mode_label = MODE_META.get(mode or "", {}).get("title", "INTERVIEW")
+    st.markdown(
+        f"""
+        <div class="app-header-shell">
+          <div class="app-header-topline"></div>
+          <div class="app-header-card">
+            <div class="app-header-left">
+              <div class="app-header-title">Mock Interview Platform</div>
+              <div class="app-header-subtitle">Practice realistic interview questions, get structured feedback, and track improvement.</div>
+            </div>
+            <div class="app-header-right">
+              <span class="app-chip">Mode: {mode_label}</span>
+              <span class="app-chip app-chip-muted">ETB</span>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def _api_session_id(mode: str) -> str:
     """Separate orchestrator question-bank state per interview type."""
     return f"web-{mode}"
@@ -204,6 +227,7 @@ def _build_interview_results_payload(mode: str) -> dict:
         "timestamp": int(time.time()),
         "mode": mode,
         "rawFeedback": fb,
+        "fromEmbedded": False,
     }
 
 
@@ -212,6 +236,7 @@ def _merge_embed_results(base: dict, embed) -> dict:
     if not embed or not isinstance(embed, dict):
         return base
     merged = {**base, **embed}
+    merged["fromEmbedded"] = True
     if "questions" not in merged or not merged["questions"]:
         merged["questions"] = base.get("questions") or []
     return merged
@@ -238,7 +263,7 @@ def _render_interview_results_dashboard() -> None:
         return
     has_rows = bool(r.get("questions"))
     has_feedback = bool(r.get("rawFeedback"))
-    if not has_rows and not has_feedback and r.get("answeredCount", 0) == 0:
+    if not has_feedback and not r.get("fromEmbedded", False):
         return
 
     st.markdown("---")
@@ -301,7 +326,7 @@ st.markdown("""
         font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     }
     .main h3 {
-        font-size: 1.05rem;
+        font-size: 1.0rem;
         font-weight: 600;
         letter-spacing: -0.02em;
         color: #1e293b;
@@ -311,6 +336,24 @@ st.markdown("""
         background: linear-gradient(165deg, #f8fafc 0%, #eef2f7 45%, #f1f5f9 100%);
         color: var(--text-primary);
     }
+    /* Hide Streamlit top chrome for cleaner look */
+    header[data-testid="stHeader"], [data-testid="stToolbar"] {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    .stApp [data-testid="stDataFrame"] {
+        background: #ffffff !important;
+        border: 1px solid var(--border-subtle);
+        border-radius: 10px;
+    }
+    .stApp [data-testid="stDataFrame"] * {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+    }
+    .stApp [data-testid="stDataFrame"] thead tr th {
+        background: #f8fafc !important;
+        color: #334155 !important;
+    }
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #fafbfc 0%, #f4f6f9 100%);
         border-right: 1px solid var(--border-subtle);
@@ -319,8 +362,69 @@ st.markdown("""
     .stMarkdown, p, label {
         color: var(--text-primary);
     }
+    .app-header-shell {
+        margin: 0.1rem 0 0.9rem 0;
+    }
+    .app-header-topline {
+        height: 8px;
+        width: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 35%, #a78bfa 70%, #f59e0b 100%);
+        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.2);
+        margin-bottom: 0.55rem;
+    }
+    .app-header-card {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.9rem;
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    }
+    .app-header-title {
+        font-size: 1.24rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+        margin: 0 0 0.2rem 0;
+    }
+    .app-header-subtitle {
+        font-size: 0.9rem;
+        line-height: 1.45;
+        color: #64748b;
+        margin: 0;
+        max-width: 52rem;
+    }
+    .app-header-right {
+        display: flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        padding-top: 0.15rem;
+    }
+    .app-chip {
+        display: inline-block;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1e3a8a;
+        border-radius: 999px;
+        padding: 0.25rem 0.58rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .app-chip-muted {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #475569;
+    }
     .app-hero-title {
-        font-size: 1.85rem;
+        font-size: 1.72rem;
         font-weight: 700;
         letter-spacing: -0.03em;
         color: #0f172a;
@@ -361,6 +465,29 @@ st.markdown("""
         border-left: 2px solid #cbd5e1;
         padding-left: 0.65rem;
     }
+    .active-mode-card {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #dbeafe;
+        border-left: 3px solid #3b82f6;
+        border-radius: 10px;
+        padding: 0.6rem 0.7rem;
+        margin: -0.15rem 0 1rem 0;
+        box-shadow: 0 1px 6px rgba(2, 6, 23, 0.06);
+    }
+    .active-mode-title {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        color: #1d4ed8;
+        text-transform: uppercase;
+        margin: 0 0 0.25rem 0;
+    }
+    .active-mode-desc {
+        font-size: 0.79rem;
+        line-height: 1.45;
+        color: #475569;
+        margin: 0;
+    }
     .big-font { font-size: 24px !important; font-weight: 600; }
     .interview-flow {
         display: flex;
@@ -386,7 +513,7 @@ st.markdown("""
         border: 1px solid rgba(59, 130, 246, 0.22);
         border-left: 5px solid #2563eb;
         box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
-        font-size: 1.05rem;
+        font-size: 1.0rem;
         line-height: 1.65;
         width: 100%;
         max-width: 100%;
@@ -413,7 +540,7 @@ st.markdown("""
         border: 1px solid var(--border-subtle);
         border-radius: 14px;
         padding: 1rem 1.2rem 1rem;
-        margin: 0.35rem 0 0.85rem 0;
+        margin: 0.2rem 0 0.75rem 0;
         box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
     }
     .answer-workspace-title {
@@ -444,7 +571,7 @@ st.markdown("""
         width: 100%;
         max-width: 100%;
         line-height: 1.8;
-        font-size: 1.05rem;
+        font-size: 1.0rem;
         box-sizing: border-box;
         display: block;
         box-shadow: 0 10px 22px rgba(217, 119, 6, 0.14);
@@ -465,7 +592,7 @@ st.markdown("""
     /* Desktop layout: use horizontal space */
     .main .block-container {
         max-width: 100%;
-        padding: 2rem 3rem;
+        padding: 1.6rem 2.6rem;
     }
     @media (min-width: 768px) {
         .main .block-container { max-width: 1100px; }
@@ -540,14 +667,32 @@ st.markdown("""
         background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
         color: #0f172a;
     }
-    div[data-testid="stButton"] button[kind="primary"] {
-        background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important;
-        color: #ffffff !important;
-        border: 1px solid #1d4ed8 !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-    }
-    div[data-testid="stButton"] button[kind="primary"]:hover {
+    /* Primary buttons: force high-contrast readable text across Streamlit versions */
+    div[data-testid="stButton"] button[kind="primary"],
+    div[data-testid="stButton"] button[data-testid="baseButton-primary"],
+    .stButton button[kind="primary"],
+    .stButton button[data-testid="baseButton-primary"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #1e40af !important;
+        text-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        font-weight: 700 !important;
+    }
+    div[data-testid="stButton"] button[kind="primary"]:hover,
+    div[data-testid="stButton"] button[data-testid="baseButton-primary"]:hover,
+    .stButton button[kind="primary"]:hover,
+    .stButton button[data-testid="baseButton-primary"]:hover {
+        background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%) !important;
+        color: #ffffff !important;
+        border-color: #1e3a8a !important;
+    }
+    div[data-testid="stButton"] button[kind="primary"]:focus-visible,
+    div[data-testid="stButton"] button[data-testid="baseButton-primary"]:focus-visible,
+    .stButton button[kind="primary"]:focus-visible,
+    .stButton button[data-testid="baseButton-primary"]:focus-visible {
+        outline: 3px solid rgba(59, 130, 246, 0.45) !important;
+        outline-offset: 2px;
     }
     /* Inputs for better contrast */
     .stTextArea textarea {
@@ -570,19 +715,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header
-st.markdown(
-    """
-    <div class="header-ribbon"></div>
-    <p class="app-hero-title">Mock Interview Platform</p>
-    <p class="app-hero-sub">
-        Practice realistic interview questions, respond in your own words, and get structured feedback
-        on clarity, depth, and structure—before the real conversation.
-    </p>
-    """,
-    unsafe_allow_html=True,
-)
-st.markdown("---")
+# Header (consistent across all states)
+_render_page_header(st.session_state.get("interview_mode", "behavioral"))
 
 # Check API once per session (retries help when free-tier API is waking from sleep)
 if "api_ok" not in st.session_state:
@@ -626,7 +760,8 @@ mode = st.sidebar.radio(
     key="interview_mode",
 )
 st.sidebar.markdown(
-    f'<p class="mode-type-desc">{MODE_META[mode]["desc"]}</p>',
+    f'<div class="active-mode-card"><div class="active-mode-title">Active mode: {MODE_META[mode]["title"]}</div>'
+    f'<p class="active-mode-desc">{MODE_META[mode]["desc"]}</p></div>',
     unsafe_allow_html=True,
 )
 
@@ -705,7 +840,7 @@ if result_data:
 else:
     st.session_state.interview_results = _base_results
 
-with st.expander("Embedded HTML interview (optional)", expanded=False):
+with st.expander("Optional interactive/voice-style embed", expanded=False):
     st.caption(
         "Runs in an iframe below. From your HTML/JS, call **parent.postMessage** with "
         "`type: 'interview_results'` and `data` matching the session export shape."
@@ -798,9 +933,10 @@ section.main .stTextArea textarea {
             unsafe_allow_html=True,
         )
     _expand_tpl = st.session_state.pop("expand_answer_template", False)
+    st.caption("Use this structure before writing your answer.")
     with st.expander(
         "Answer structure (template)",
-        expanded=bool(_expand_tpl),
+        expanded=bool(_expand_tpl or st.session_state.get("highlight_answer_for_new_question")),
     ):
         st.markdown(_answer_template_markdown(mode))
     _q_key = f"answer_q_{len(st.session_state.questions)}"
