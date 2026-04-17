@@ -136,10 +136,54 @@ API docs: `http://localhost:8000/docs`
 
 ---
 
+## Cloud Deployment (Render + Streamlit Cloud)
+
+Use two services:
+
+- **API service (Render):** runs `main.py`
+- **UI service (Streamlit Cloud):** runs `app.py`
+
+### Render API environment variables
+
+Set these on the **API service**:
+
+- `HUGGINGFACEHUB_API_TOKEN=hf_...`
+- `HF_LLM_MODEL=meta-llama/Llama-3.1-8B-Instruct`
+
+Optional:
+
+- `HF_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2`
+- `HF_WHISPER_MODEL=openai/whisper-large-v3`
+- `HF_TTS_MODEL=facebook/mms-tts-eng`
+
+### Streamlit Cloud secrets
+
+Set these on the **UI app**:
+
+- `API_URL="https://etb-api.onrender.com"`
+- `API_CHECK_TIMEOUT="60"`
+- `API_CHECK_ATTEMPTS="4"`
+- `API_CHECK_PAUSE="5"`
+
+After changing secrets or env vars, restart/redeploy the corresponding service.
+
+### Common deployment issues
+
+- **Fallback feedback ("AI-powered evaluation was unavailable")**
+  - Usually means API model/provider mismatch or missing token.
+  - Confirm API env keys and redeploy API service.
+- **Model not supported in logs**
+  - Switch `HF_LLM_MODEL` to a provider-supported model (recommended above).
+- **UI still showing old behavior**
+  - Reboot Streamlit app and hard refresh browser (`Cmd+Shift+R` / `Ctrl+Shift+R`).
+
+---
+
 ## API Keys You’ll Need
 
 - **Hugging Face** (required): [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) → create token with read access
 - Add to `.env`: `HUGGINGFACEHUB_API_TOKEN=hf_...`
-- Powers: LLM (Mistral), embeddings (sentence-transformers), Whisper (STT), TTS
+- Optional model override in `.env`: `HF_LLM_MODEL=meta-llama/Llama-3.1-8B-Instruct`
+- Powers: LLM evaluation/generation, embeddings (sentence-transformers), Whisper (STT), TTS
 
 See `.env.example` for all variables.
