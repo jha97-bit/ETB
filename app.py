@@ -5,6 +5,7 @@ Run with: streamlit run app.py
 Set API_URL in the environment when the API is not on localhost (e.g. cloud deploy).
 """
 
+import base64
 import json
 import os
 import re
@@ -153,24 +154,34 @@ def _html_escape(s: str) -> str:
 def _render_page_header(mode=None) -> None:
     """Consistent top header shown across all app states."""
     mode_label = MODE_META.get(mode or "", {}).get("title", "INTERVIEW")
+    mode_desc = MODE_META.get(mode or "", {}).get("desc", "")
     st.markdown(
         f"""
         <div class="app-header-shell">
           <div class="app-header-topline"></div>
           <div class="app-header-card">
-            <div class="app-header-left">
-              <div class="app-header-title">Mock Interview Platform</div>
-              <div class="app-header-subtitle">Practice realistic interview questions, get structured feedback, and track improvement.</div>
-            </div>
-            <div class="app-header-right">
+            <div class="app-header-title">Mock Interview Platform</div>
+            <div class="app-header-subtitle">Practice realistic interview questions, get structured feedback, and track improvement.</div>
+            <div class="app-header-meta">
               <span class="app-chip">Mode: {mode_label}</span>
               <span class="app-chip app-chip-muted">ETB</span>
             </div>
+            <div class="app-header-mode-desc">{mode_desc}</div>
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+def _decode_audio_b64(payload: dict):
+    raw = payload.get("audio_base64") if isinstance(payload, dict) else None
+    if not raw:
+        return None
+    try:
+        return base64.b64decode(raw)
+    except Exception:
+        return None
 
 
 def _api_session_id(mode: str) -> str:
@@ -187,6 +198,8 @@ def _clear_interview_progress() -> None:
     st.session_state.started = False
     st.session_state.latest_feedback = None
     st.session_state.interview_results = None
+    st.session_state.voice_last_question = None
+    st.session_state.voice_last_audio = None
     st.session_state.highlight_answer_for_new_question = False
     st.session_state.show_new_question_toast = False
     st.session_state.expand_answer_template = False
@@ -337,9 +350,15 @@ st.markdown("""
         color: var(--text-primary);
     }
     /* Hide Streamlit top chrome for cleaner look */
-    header[data-testid="stHeader"], [data-testid="stToolbar"] {
-        background: transparent !important;
-        box-shadow: none !important;
+    header[data-testid="stHeader"],
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    #MainMenu,
+    .stAppDeployButton,
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
     }
     .stApp [data-testid="stDataFrame"] {
         background: #ffffff !important;
@@ -363,47 +382,53 @@ st.markdown("""
         color: var(--text-primary);
     }
     .app-header-shell {
-        margin: 0.1rem 0 0.9rem 0;
+        margin: -0.65rem 0 0.45rem 0;
     }
     .app-header-topline {
-        height: 8px;
+        height: 14px;
         width: 100%;
         border-radius: 999px;
-        background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 35%, #a78bfa 70%, #f59e0b 100%);
-        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.2);
-        margin-bottom: 0.55rem;
+        background: linear-gradient(90deg, #2563eb 0%, #3b82f6 32%, #7c3aed 68%, #f59e0b 100%);
+        box-shadow: 0 3px 12px rgba(37, 99, 235, 0.32);
+        margin-bottom: 0.35rem;
     }
     .app-header-card {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.9rem;
-        align-items: flex-start;
-        background: rgba(255, 255, 255, 0.86);
-        border: 1px solid #e2e8f0;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid #dbeafe;
         border-radius: 12px;
-        padding: 0.9rem 1rem;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+        padding: 0.8rem 1rem 0.65rem;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
     }
     .app-header-title {
-        font-size: 1.24rem;
-        font-weight: 700;
+        font-size: 1.45rem;
+        font-weight: 800;
         letter-spacing: -0.02em;
         color: #0f172a;
-        margin: 0 0 0.2rem 0;
+        margin: 0 0 0.15rem 0;
     }
     .app-header-subtitle {
-        font-size: 0.9rem;
-        line-height: 1.45;
+        font-size: 0.92rem;
+        line-height: 1.42;
         color: #64748b;
-        margin: 0;
-        max-width: 52rem;
+        margin: 0 0 0.45rem 0;
+        max-width: 54rem;
     }
-    .app-header-right {
+    .app-header-meta {
         display: flex;
         gap: 0.45rem;
         flex-wrap: wrap;
-        justify-content: flex-end;
-        padding-top: 0.15rem;
+        justify-content: flex-start;
+        align-items: center;
+        margin-top: 0.2rem;
+    }
+    .app-header-mode-desc {
+        margin-top: 0.35rem;
+        font-size: 0.82rem;
+        color: #475569;
+        border-left: 2px solid #bfdbfe;
+        padding-left: 0.55rem;
+        line-height: 1.35;
+        max-width: 46rem;
     }
     .app-chip {
         display: inline-block;
@@ -517,6 +542,9 @@ st.markdown("""
         line-height: 1.65;
         width: 100%;
         max-width: 100%;
+        word-break: normal;
+        overflow-wrap: break-word;
+        hyphens: none;
     }
     .scenario-box {
         background: #ffffff;
@@ -592,7 +620,7 @@ st.markdown("""
     /* Desktop layout: use horizontal space */
     .main .block-container {
         max-width: 100%;
-        padding: 1.6rem 2.6rem;
+        padding: 0.45rem 2.35rem 1.35rem;
     }
     @media (min-width: 768px) {
         .main .block-container { max-width: 1100px; }
@@ -655,17 +683,18 @@ st.markdown("""
     /* Button styling */
     .stButton > button {
         border-radius: 8px;
-        border: 1px solid #c7d2fe;
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        color: #1e293b;
-        font-weight: 600;
+        border: 1px solid #1d4ed8;
+        background: linear-gradient(135deg, #2563eb 0%, #4338ca 100%);
+        color: #ffffff !important;
+        font-weight: 700;
         font-size: 0.9rem;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        text-shadow: 0 1px 0 rgba(0,0,0,0.16);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
     }
     .stButton > button:hover {
-        border-color: #6366f1;
-        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-        color: #0f172a;
+        border-color: #1e3a8a;
+        background: linear-gradient(135deg, #1d4ed8 0%, #3730a3 100%);
+        color: #ffffff !important;
     }
     /* Primary buttons: force high-contrast readable text across Streamlit versions */
     div[data-testid="stButton"] button[kind="primary"],
@@ -678,6 +707,13 @@ st.markdown("""
         text-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
         box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
         font-weight: 700 !important;
+    }
+    div[data-testid="stButton"] button[kind="primary"] *,
+    div[data-testid="stButton"] button[data-testid="baseButton-primary"] *,
+    .stButton button[kind="primary"] *,
+    .stButton button[data-testid="baseButton-primary"] * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
     }
     div[data-testid="stButton"] button[kind="primary"]:hover,
     div[data-testid="stButton"] button[data-testid="baseButton-primary"]:hover,
@@ -698,8 +734,24 @@ st.markdown("""
     .stTextArea textarea {
         background: #ffffff !important;
         color: #0f172a !important;
-        border: 1px solid #d1d9e6 !important;
+        border: 2px solid #cbd5e1 !important;
         border-radius: 10px !important;
+        box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+    }
+    [data-testid="stExpander"] details {
+        background: transparent !important;
+        border: none !important;
+    }
+    [data-testid="stExpander"] details summary {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        padding: 0.45rem 0.7rem !important;
+    }
+    [data-testid="stExpander"] details summary * {
+        color: #0f172a !important;
+        fill: #0f172a !important;
     }
     .new-question-banner {
         background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
@@ -765,6 +817,13 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
+st.sidebar.markdown('<p class="sidebar-section-label">Display</p>', unsafe_allow_html=True)
+st.sidebar.caption("Use the left panel for mode and tool controls.")
+
+st.sidebar.markdown('<p class="sidebar-section-label">Advanced tools</p>', unsafe_allow_html=True)
+show_voice_tools = st.sidebar.toggle("Show voice chat tools", value=False, key="show_voice_tools")
+show_embed_tools = st.sidebar.toggle("Show interactive embed", value=False, key="show_embed_tools")
+
 # Initialize session state
 if "questions" not in st.session_state:
     st.session_state.questions = []
@@ -786,6 +845,12 @@ if "expand_answer_template" not in st.session_state:
     st.session_state.expand_answer_template = False
 if "interview_results" not in st.session_state:
     st.session_state.interview_results = None
+if "voice_last_question" not in st.session_state:
+    st.session_state.voice_last_question = None
+if "voice_last_audio" not in st.session_state:
+    st.session_state.voice_last_audio = None
+if "show_voice_panel" not in st.session_state:
+    st.session_state.show_voice_panel = False
 if "last_interview_mode" not in st.session_state:
     st.session_state.last_interview_mode = mode
 
@@ -840,12 +905,9 @@ if result_data:
 else:
     st.session_state.interview_results = _base_results
 
-with st.expander("Optional interactive/voice-style embed", expanded=False):
-    st.caption(
-        "Runs in an iframe below. From your HTML/JS, call **parent.postMessage** with "
-        "`type: 'interview_results'` and `data` matching the session export shape."
-    )
-    components.html(_EMBED_HTML, height=340, scrolling=True)
+
+# Advanced tools are rendered near the bottom to keep first fold focused.
+
 
 # Main flow
 if not st.session_state.started:
@@ -910,14 +972,19 @@ else:
     _flow_parts.append("</div>")
     st.markdown("".join(_flow_parts), unsafe_allow_html=True)
 
-    _ans_header = ['<div class="answer-workspace">', '<div class="answer-workspace-title">✍️ Your answer</div>']
+    st.markdown('<div class="answer-workspace">', unsafe_allow_html=True)
+    a1, a2 = st.columns([3, 1])
+    with a1:
+        st.markdown('<div class="answer-workspace-title">✍️ Your answer</div>', unsafe_allow_html=True)
+    with a2:
+        if st.button("🎙 Voice", key="voice_inline_toggle", use_container_width=True):
+            st.session_state.show_voice_panel = not st.session_state.show_voice_panel
     if st.session_state.get("highlight_answer_for_new_question"):
-        _ans_header.append(
+        st.markdown(
             '<div class="new-question-banner">✨ <strong>New question</strong> — type your answer below '
-            "(the box is highlighted until you submit).</div>"
+            '(the box is highlighted until you submit).</div>',
+            unsafe_allow_html=True,
         )
-    _ans_header.append("</div>")
-    st.markdown("".join(_ans_header), unsafe_allow_html=True)
     if st.session_state.get("highlight_answer_for_new_question"):
         st.markdown(
             """
@@ -933,20 +1000,64 @@ section.main .stTextArea textarea {
             unsafe_allow_html=True,
         )
     _expand_tpl = st.session_state.pop("expand_answer_template", False)
-    st.caption("Use this structure before writing your answer.")
-    with st.expander(
-        "Answer structure (template)",
-        expanded=bool(_expand_tpl or st.session_state.get("highlight_answer_for_new_question")),
-    ):
-        st.markdown(_answer_template_markdown(mode))
     _q_key = f"answer_q_{len(st.session_state.questions)}"
     answer = st.text_area(
         "Type your response here (as you would say it in a real interview):",
-        height=160,
+        height=180,
         placeholder="Type your answer here…",
         label_visibility="collapsed",
         key=_q_key,
     )
+
+    if st.session_state.get("show_voice_panel"):
+        with st.expander("🎙 Voice chat (quick)", expanded=True):
+            v1, v2 = st.columns([1, 1])
+            with v1:
+                if st.button("Start voice interview", key="voice_start_inline", use_container_width=True):
+                    try:
+                        r = requests.post(
+                            f"{API_URL}/voice/start",
+                            data={"session_id": _api_session_id(mode), "user_id": "user", "mode": mode},
+                            timeout=30,
+                        )
+                        r.raise_for_status()
+                        payload = r.json()
+                        st.session_state.voice_last_question = payload.get("question")
+                        st.session_state.voice_last_audio = _decode_audio_b64(payload)
+                        st.success("Voice prompt ready.")
+                    except Exception as e:
+                        st.error(f"Voice start failed: {_request_error_message(e)}")
+            with v2:
+                vf = st.file_uploader("Upload spoken answer", type=["wav", "mp3", "m4a", "webm", "ogg"], key="voice_inline_upload")
+                if st.button("Send voice answer", key="voice_ask_inline", use_container_width=True):
+                    if not vf:
+                        st.warning("Upload an audio file first.")
+                    else:
+                        try:
+                            files = {"audio": (vf.name, vf.getvalue(), vf.type or "application/octet-stream")}
+                            data = {
+                                "session_id": _api_session_id(mode),
+                                "user_id": "user",
+                                "mode": mode,
+                                "last_question": st.session_state.voice_last_question or "",
+                            }
+                            r = requests.post(f"{API_URL}/voice/ask", data=data, files=files, timeout=60)
+                            r.raise_for_status()
+                            payload = r.json()
+                            st.session_state.voice_last_question = payload.get("question")
+                            st.session_state.voice_last_audio = _decode_audio_b64(payload)
+                            st.success("Received next voice question.")
+                        except Exception as e:
+                            st.error(f"Voice ask failed: {_request_error_message(e)}")
+            if st.session_state.voice_last_question:
+                st.markdown(f"**Latest voice question:** {st.session_state.voice_last_question}")
+            if st.session_state.voice_last_audio:
+                st.audio(st.session_state.voice_last_audio, format="audio/wav")
+
+    st.caption("Use this structure after drafting, then refine your answer.")
+    with st.expander("Answer structure (template)", expanded=bool(_expand_tpl)):
+        st.markdown(_answer_template_markdown(mode))
+    st.markdown("</div>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
@@ -1041,6 +1152,66 @@ section.main .stTextArea textarea {
                         f'<div class="dimension-item">{dimension_html}</div>',
                         unsafe_allow_html=True,
                     )
+
+    # Advanced tools (kept below main interview flow for better first-fold focus)
+    if show_voice_tools:
+        with st.expander("🎙 Voice chat (beta)", expanded=False):
+            st.caption("Use spoken prompts via `/voice/start` and `/voice/ask`.")
+            vcol1, vcol2 = st.columns([1, 1])
+            with vcol1:
+                if st.button("Start voice interview", key="voice_start_btn", use_container_width=True):
+                    try:
+                        r = requests.post(
+                            f"{API_URL}/voice/start",
+                            data={"session_id": _api_session_id(mode), "user_id": "user", "mode": mode},
+                            timeout=30,
+                        )
+                        r.raise_for_status()
+                        payload = r.json()
+                        st.session_state.voice_last_question = payload.get("question")
+                        st.session_state.voice_last_audio = _decode_audio_b64(payload)
+                        st.success("Voice prompt ready. Play audio below.")
+                    except Exception as e:
+                        st.error(f"Voice start failed: {_request_error_message(e)}")
+            with vcol2:
+                voice_file = st.file_uploader(
+                    "Upload your spoken answer",
+                    type=["wav", "mp3", "m4a", "webm", "ogg"],
+                    key="voice_upload",
+                )
+                if st.button("Send voice answer", key="voice_ask_btn", use_container_width=True):
+                    if not voice_file:
+                        st.warning("Upload an audio file first.")
+                    else:
+                        try:
+                            files = {"audio": (voice_file.name, voice_file.getvalue(), voice_file.type or "application/octet-stream")}
+                            data = {
+                                "session_id": _api_session_id(mode),
+                                "user_id": "user",
+                                "mode": mode,
+                                "last_question": st.session_state.voice_last_question or "",
+                            }
+                            r = requests.post(f"{API_URL}/voice/ask", data=data, files=files, timeout=60)
+                            r.raise_for_status()
+                            payload = r.json()
+                            st.session_state.voice_last_question = payload.get("question")
+                            st.session_state.voice_last_audio = _decode_audio_b64(payload)
+                            st.success("Received next voice question.")
+                        except Exception as e:
+                            st.error(f"Voice ask failed: {_request_error_message(e)}")
+
+            if st.session_state.voice_last_question:
+                st.markdown(f"**Latest voice question:** {st.session_state.voice_last_question}")
+            if st.session_state.voice_last_audio:
+                st.audio(st.session_state.voice_last_audio, format="audio/wav")
+
+    if show_embed_tools:
+        with st.expander("Optional interactive/voice-style embed", expanded=False):
+            st.caption(
+                "Runs in an iframe below. From your HTML/JS, call **parent.postMessage** with "
+                "`type: 'interview_results'` and `data` matching the session export shape."
+            )
+            components.html(_EMBED_HTML, height=340, scrolling=True)
 
     # Show Q&A history
     if st.session_state.questions:
