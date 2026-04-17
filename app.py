@@ -132,6 +132,24 @@ def _request_error_message(e: Exception) -> str:
     return str(e)
 
 
+def _case_description_hint(mode: str, question: str, existing_hint=None):
+    """Ensure case mode always shows a useful context blurb."""
+    if existing_hint:
+        return existing_hint
+    if mode != "case" or not question:
+        return None
+
+    # Pattern used by generated case questions: "For the <Title> case, ..."
+    m = re.search(r"(?i)for the\s+(.+?)\s+case", question)
+    title = m.group(1).strip() if m else "this case"
+
+    return (
+        f"Case description: {title} focuses on business problem framing, key metrics, "
+        "hypothesis-driven analysis, and a clear recommendation with trade-offs. "
+        "State assumptions, quantify where possible, and close with next steps."
+    )
+
+
 def _summary_to_html(text: str) -> str:
     """Convert markdown-style bold (**text**) to HTML for styled display."""
     if not text:
@@ -380,6 +398,11 @@ st.markdown("""
     }
     .stMarkdown, p, label {
         color: var(--text-primary);
+    }
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricValue"],
+    [data-testid="stMetricDelta"] {
+        color: #0f172a !important;
     }
     .app-header-shell {
         margin: -0.65rem 0 0.45rem 0;
@@ -680,20 +703,28 @@ st.markdown("""
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) * {
         color: #1e3a8a !important;
     }
+    section[data-testid="stSidebar"] input[type="radio"] {
+        accent-color: #2563eb !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    section[data-testid="stSidebar"] label[data-baseweb="checkbox"] span,
+    section[data-testid="stSidebar"] [data-testid="stSidebar"] [role="switch"] {
+        color: #0f172a !important;
+    }
     /* Button styling */
     .stButton > button {
         border-radius: 8px;
-        border: 1px solid #1d4ed8;
-        background: linear-gradient(135deg, #2563eb 0%, #4338ca 100%);
-        color: #ffffff !important;
-        font-weight: 700;
+        border: 1px solid #c7d2fe;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        color: #1e293b !important;
+        font-weight: 600;
         font-size: 0.9rem;
-        text-shadow: 0 1px 0 rgba(0,0,0,0.16);
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
     }
     .stButton > button:hover {
-        border-color: #1e3a8a;
-        background: linear-gradient(135deg, #1d4ed8 0%, #3730a3 100%);
+        border-color: #6366f1;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
         color: #ffffff !important;
     }
     /* Primary buttons: force high-contrast readable text across Streamlit versions */
@@ -730,13 +761,35 @@ st.markdown("""
         outline: 3px solid rgba(59, 130, 246, 0.45) !important;
         outline-offset: 2px;
     }
+    .stButton > button:active,
+    .stButton button[kind="primary"]:active,
+    .stButton button[data-testid="baseButton-primary"]:active {
+        transform: translateY(1px) scale(0.995);
+        filter: brightness(0.92);
+        transition: transform 0.06s ease, filter 0.06s ease;
+    }
+    .stButton > button:disabled,
+    .stButton button[kind="primary"]:disabled,
+    .stButton button[data-testid="baseButton-primary"]:disabled {
+        background: linear-gradient(135deg, #60a5fa 0%, #6366f1 100%) !important;
+        border-color: #3b82f6 !important;
+        color: #ffffff !important;
+        opacity: 0.9 !important;
+    }
     /* Inputs for better contrast */
     .stTextArea textarea {
         background: #ffffff !important;
         color: #0f172a !important;
-        border: 2px solid #cbd5e1 !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 10px !important;
-        box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+        min-height: 180px !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) inset;
+        caret-color: #1d4ed8 !important;
+        cursor: text !important;
+    }
+    .stTextArea textarea:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
     }
     [data-testid="stExpander"] details {
         background: transparent !important;
@@ -752,6 +805,49 @@ st.markdown("""
     [data-testid="stExpander"] details summary * {
         color: #0f172a !important;
         fill: #0f172a !important;
+    }
+
+    /* Accessibility: enforce white text on blue/purple UI surfaces */
+    .app-chip,
+    .active-mode-title,
+    .new-question-banner,
+    .question-box,
+    .stButton button[kind="primary"],
+    .stButton button[data-testid="baseButton-primary"],
+    div[data-testid="stButton"] button[kind="primary"],
+    div[data-testid="stButton"] button[data-testid="baseButton-primary"] {
+        color: #ffffff !important;
+    }
+    .app-chip *,
+    .active-mode-title *,
+    .new-question-banner *,
+    .question-box *,
+    .stButton button[kind="primary"] *,
+    .stButton button[data-testid="baseButton-primary"] *,
+    div[data-testid="stButton"] button[kind="primary"] *,
+    div[data-testid="stButton"] button[data-testid="baseButton-primary"] * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+    }
+    .app-chip {
+        background: linear-gradient(135deg, #1d4ed8 0%, #3730a3 100%) !important;
+        border-color: #1e3a8a !important;
+    }
+    .active-mode-title {
+        background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
+        border-radius: 999px;
+        display: inline-block;
+        padding: 0.2rem 0.55rem;
+    }
+    .new-question-banner {
+        background: linear-gradient(135deg, #4338ca 0%, #5b21b6 100%) !important;
+        border-color: #3730a3 !important;
+    }
+    .question-box {
+        background: linear-gradient(145deg, #1d4ed8 0%, #2563eb 55%, #4338ca 100%) !important;
+        border-color: #1e40af !important;
+        border-left-color: #1e3a8a !important;
+        text-shadow: 0 1px 0 rgba(0,0,0,0.2);
     }
     .new-question-banner {
         background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
@@ -868,7 +964,7 @@ st.session_state.last_interview_mode = mode
 
 # Optional: iframe → parent.postMessage → Streamlit (streamlit-javascript)
 result_data = None
-if st_javascript is not None:
+if show_embed_tools and st_javascript is not None:
     try:
         _raw_js = st_javascript(
             """
@@ -898,10 +994,7 @@ if result_data:
     _h = hash(json.dumps(result_data, sort_keys=True, default=str))
     if st.session_state.get("_last_embed_hash") != _h:
         st.session_state._last_embed_hash = _h
-        if hasattr(st, "toast"):
-            st.toast("Embedded view posted interview results.", icon="📥")
-        else:
-            st.success("Results received from embedded view (postMessage).")
+        st.success("Results received from embedded view (postMessage).")
 else:
     st.session_state.interview_results = _base_results
 
@@ -945,8 +1038,7 @@ if not st.session_state.started:
 else:
     # Toast / banner when a new question just loaded (persists across rerun; success before rerun does not)
     if st.session_state.get("show_new_question_toast"):
-        if hasattr(st, "toast"):
-            st.toast("New question — answer below. Your previous response was saved.", icon="✨")
+        st.info("✨ New question loaded — answer below. Your previous response was saved.")
         st.session_state.show_new_question_toast = False
 
     # Current round: question → context → answer (single stacked flow)
@@ -956,10 +1048,11 @@ else:
         '<div><div class="card-label">Question</div>',
         f'<div class="question-box">{_q_text}</div></div>',
     ]
-    if st.session_state.current_hint:
-        _h = (st.session_state.current_hint or "").strip()
+    _display_hint = _case_description_hint(mode, st.session_state.current_question or "", st.session_state.current_hint)
+    if _display_hint:
+        _h = (_display_hint or "").strip()
         _h_lower = _h.lower()
-        if _h_lower.startswith("scenario"):
+        if _h_lower.startswith("scenario") or _h_lower.startswith("case description"):
             _scenario_html = f'<div class="scenario-box">{_html_escape(_h)}</div>'
         else:
             _scenario_html = (
@@ -1055,44 +1148,13 @@ section.main .stTextArea textarea {
                 st.audio(st.session_state.voice_last_audio, format="audio/wav")
 
     st.caption("Use this structure after drafting, then refine your answer.")
-    with st.expander("Answer structure (template)", expanded=bool(_expand_tpl)):
+    with st.expander("Answer structure (template)", expanded=False):
         st.markdown(_answer_template_markdown(mode))
     st.markdown("</div>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
-        if st.button("➡️ Submit & Get Next Question", use_container_width=True):
-            if not answer.strip():
-                st.warning("Please type an answer first.")
-            else:
-                try:
-                    st.session_state.highlight_answer_for_new_question = False
-                    st.session_state.answers.append(answer)
-                    r = requests.post(
-                        f"{API_URL}/ask_question",
-                        json={
-                            "session_id": _api_session_id(mode),
-                            "user_id": "user",
-                            "mode": mode,
-                            "last_question": st.session_state.current_question,
-                            "last_answer": answer,
-                        },
-                        timeout=15,
-                    )
-                    r.raise_for_status()
-                    data = r.json()
-                    st.session_state.current_question = data["question"]
-                    st.session_state.current_hint = data.get("hint")
-                    st.session_state.questions.append(data["question"])
-                    st.session_state.highlight_answer_for_new_question = True
-                    st.session_state.show_new_question_toast = True
-                    st.session_state.expand_answer_template = True
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error: {_request_error_message(e)}")
-    
-    with col2:
-        if st.button("📊 Get Feedback on My Answer", use_container_width=True):
+        if st.button("📊 Get Feedback on My Answer", type="primary", use_container_width=True):
             if not answer.strip():
                 st.warning("Please type an answer first.")
             else:
@@ -1113,6 +1175,38 @@ section.main .stTextArea textarea {
                         st.rerun()
                     except Exception as e:
                         st.error(f"Could not get feedback: {e}")
+
+    with col2:
+        if st.button("➡️ Submit & Get Next Question", use_container_width=True):
+            if not answer.strip():
+                st.warning("Please type an answer first.")
+            else:
+                try:
+                    with st.spinner("Loading next question..."):
+                        st.session_state.highlight_answer_for_new_question = False
+                        st.session_state.answers.append(answer)
+                        r = requests.post(
+                            f"{API_URL}/ask_question",
+                            json={
+                                "session_id": _api_session_id(mode),
+                                "user_id": "user",
+                                "mode": mode,
+                                "last_question": st.session_state.current_question,
+                                "last_answer": answer,
+                            },
+                            timeout=15,
+                        )
+                        r.raise_for_status()
+                        data = r.json()
+                        st.session_state.current_question = data["question"]
+                        st.session_state.current_hint = data.get("hint")
+                        st.session_state.questions.append(data["question"])
+                        st.session_state.highlight_answer_for_new_question = True
+                        st.session_state.show_new_question_toast = True
+                        st.session_state.expand_answer_template = True
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Error: {_request_error_message(e)}")
     
     st.markdown("---")
 

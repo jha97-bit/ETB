@@ -33,3 +33,6 @@ streamlit-javascript>=0.1.5
 
 # Testing
 pytest>=7.0
+
+# Optional: generate PROJECT_REPORT.pdf (python scripts/project_report_to_pdf.py)
+fpdf2>=2.7.0

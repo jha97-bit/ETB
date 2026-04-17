@@ -128,7 +128,7 @@ class EvaluationEngine:
                 rubric_text=rubric_text,
                 case_context=case_context,
             )
-            response = self._llm.invoke([HumanMessage(content=msg)])
+            response = self._llm.invoke([HumanMessage(content=msg)], max_tokens=512)
             text = response.content if hasattr(response, "content") else str(response)
 
             import json
