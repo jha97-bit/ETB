@@ -26,10 +26,10 @@ from memory.service import MemoryService
 from evaluation.engine import EvaluationEngine
 from guardrails.filters import GuardrailsFilter
 from voice_agent import VoiceOrchestrator, SpeechToText, TextToSpeech
-from shared.config import settings
+from shared.config import get_settings
 
 # Optional LangSmith tracing: enabled only when env vars are set.
-settings.configure_langsmith()
+get_settings().configure_langsmith()
 
 # Initialize services
 orchestrator = OrchestratorAgent()
