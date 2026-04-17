@@ -38,6 +38,12 @@ class Settings(BaseModel):
     # Guardrails
     rebuff_api_key: str = os.getenv("REBUFF_API_KEY", "")
 
+    # LangSmith tracing (optional)
+    langsmith_api_key: str = os.getenv("LANGSMITH_API_KEY", "")
+    langsmith_project: str = os.getenv("LANGSMITH_PROJECT", "etb-mock-interview")
+    langsmith_tracing_v2: bool = os.getenv("LANGSMITH_TRACING_V2", "false").lower() == "true"
+    langsmith_endpoint: str = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
+
     @property
     def has_hf(self) -> bool:
         return bool(self.hf_token)
@@ -45,3 +51,16 @@ class Settings(BaseModel):
     @property
     def has_voice(self) -> bool:
         return bool(self.hf_token)
+
+    @property
+    def has_langsmith(self) -> bool:
+        return bool(self.langsmith_api_key) and self.langsmith_tracing_v2
+
+    def configure_langsmith(self) -> None:
+        """Set LangSmith runtime env vars for LangChain tracing."""
+        if not self.has_langsmith:
+            return
+        os.environ["LANGSMITH_API_KEY"] = self.langsmith_api_key
+        os.environ["LANGSMITH_PROJECT"] = self.langsmith_project
+        os.environ["LANGSMITH_TRACING_V2"] = "true"
+        os.environ["LANGSMITH_ENDPOINT"] = self.langsmith_endpoint

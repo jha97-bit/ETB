@@ -167,6 +167,17 @@ Set these on the **UI app**:
 
 After changing secrets or env vars, restart/redeploy the corresponding service.
 
+### Optional: LangSmith tracing
+
+To enable LangSmith run tracing for LangChain calls, set on the API service:
+
+- `LANGSMITH_TRACING_V2=true`
+- `LANGSMITH_API_KEY=lsv2_...`
+- `LANGSMITH_PROJECT=etb-mock-interview`
+- `LANGSMITH_ENDPOINT=https://api.smith.langchain.com`
+
+If these are not set, the app runs normally without tracing.
+
 ### Common deployment issues
 
 - **Fallback feedback ("AI-powered evaluation was unavailable")**

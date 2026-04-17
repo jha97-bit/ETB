@@ -5,6 +5,7 @@ langchain>=0.1.0
 langchain-core>=0.1.0
 langchain-community>=0.0.20
 langchain-huggingface>=0.0.1
+langsmith>=0.1.0
 
 # Hugging Face
 huggingface_hub>=0.20.0
