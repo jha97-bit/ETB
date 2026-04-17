@@ -22,6 +22,11 @@ except ImportError:
     st_javascript = None
 
 API_URL = os.environ.get("API_URL", "http://localhost:8000").rstrip("/")
+ENABLE_EMBED_BRIDGE = os.environ.get("ENABLE_EMBED_BRIDGE", "0").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
 
 
 def _is_local_api_url() -> bool:
@@ -167,6 +172,19 @@ def _html_escape(s: str) -> str:
         .replace(">", "&gt;")
         .replace('"', "&quot;")
     )
+
+
+def _clean_display_text(s: str) -> str:
+    """Normalize noisy OCR/control characters before rendering in UI."""
+    if not s:
+        return ""
+    text = s.replace("\\n", " ").replace("\n", " ").replace("\t", " ")
+    text = re.sub(r"[\x00-\x1F\x7F]", " ", text)
+    text = text.replace("�", "")
+    text = re.sub(r"[|]{2,}", " ", text)
+    text = re.sub(r"[`]{2,}", "", text)
+    text = re.sub(r"\s{2,}", " ", text).strip()
+    return text
 
 
 def _render_page_header(mode=None) -> None:
@@ -963,8 +981,9 @@ if st.session_state.get("started") and mode != st.session_state.last_interview_m
 st.session_state.last_interview_mode = mode
 
 # Optional: iframe → parent.postMessage → Streamlit (streamlit-javascript)
+# Disabled by default to avoid a blank widget bar artifact in the main layout.
 result_data = None
-if show_embed_tools and st_javascript is not None:
+if ENABLE_EMBED_BRIDGE and show_embed_tools and st_javascript is not None:
     try:
         _raw_js = st_javascript(
             """
@@ -1042,7 +1061,7 @@ else:
         st.session_state.show_new_question_toast = False
 
     # Current round: question → context → answer (single stacked flow)
-    _q_text = _html_escape(st.session_state.current_question or "")
+    _q_text = _html_escape(_clean_display_text(st.session_state.current_question or ""))
     _flow_parts = [
         '<div class="interview-flow">',
         '<div><div class="card-label">Question</div>',
@@ -1050,7 +1069,7 @@ else:
     ]
     _display_hint = _case_description_hint(mode, st.session_state.current_question or "", st.session_state.current_hint)
     if _display_hint:
-        _h = (_display_hint or "").strip()
+        _h = _clean_display_text((_display_hint or "").strip())
         _h_lower = _h.lower()
         if _h_lower.startswith("scenario") or _h_lower.startswith("case description"):
             _scenario_html = f'<div class="scenario-box">{_html_escape(_h)}</div>'
