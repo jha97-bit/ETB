@@ -726,6 +726,22 @@ st.markdown("""
         opacity: 1 !important;
         visibility: visible !important;
     }
+    /* Streamlit toggles: force visible track and knob on light sidebar */
+    section[data-testid="stSidebar"] [data-baseweb="checkbox"] > div {
+        background: #e2e8f0 !important;
+        border: 1px solid #94a3b8 !important;
+    }
+    section[data-testid="stSidebar"] [data-baseweb="checkbox"] > div::before {
+        background: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25) !important;
+    }
+    section[data-testid="stSidebar"] [data-baseweb="checkbox"] input:checked + div {
+        background: #2563eb !important;
+        border-color: #1d4ed8 !important;
+    }
+    section[data-testid="stSidebar"] [data-baseweb="checkbox"] input:checked + div::before {
+        background: #ffffff !important;
+    }
     section[data-testid="stSidebar"] label[data-baseweb="checkbox"] span,
     section[data-testid="stSidebar"] [data-testid="stSidebar"] [role="switch"] {
         color: #0f172a !important;
