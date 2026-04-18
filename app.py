@@ -1012,27 +1012,6 @@ st.sidebar.markdown('<p class="sidebar-section-label">Advanced tools</p>', unsaf
 show_voice_tools = st.sidebar.toggle("Show voice chat tools", value=False, key="show_voice_tools")
 show_embed_tools = st.sidebar.toggle("Show interactive embed", value=False, key="show_embed_tools")
 
-if mode == "case":
-    st.sidebar.markdown('<p class="sidebar-section-label">Case Upload</p>', unsafe_allow_html=True)
-    _up = st.sidebar.file_uploader(
-        "Upload case study (.txt, .md, .pdf, .doc, .docx)",
-        type=["txt", "md", "pdf", "doc", "docx"],
-        key="case_upload_file",
-        help="Uploaded text is used to generate case-specific interview questions.",
-    )
-    if _up is not None:
-        _txt = _extract_uploaded_case_text(_up)
-        if _txt:
-            st.session_state.custom_case_title = _up.name.rsplit(".", 1)[0]
-            st.session_state.custom_case_context = _txt[:8000]
-            st.sidebar.success("Case uploaded. Start interview to ask questions on this case.")
-    if st.session_state.get("custom_case_title"):
-        st.sidebar.caption(f"Active uploaded case: {st.session_state.custom_case_title}")
-        if st.sidebar.button("Clear uploaded case", key="clear_uploaded_case"):
-            st.session_state.custom_case_title = ""
-            st.session_state.custom_case_context = ""
-            st.sidebar.success("Uploaded case cleared.")
-
 # Initialize session state
 if "questions" not in st.session_state:
     st.session_state.questions = []
@@ -1123,6 +1102,31 @@ else:
 # Main flow
 if not st.session_state.started:
     st.subheader("Get Started")
+    if mode == "case":
+        st.markdown("#### Upload Case Study")
+        st.caption("Upload a `.txt`, `.md`, `.pdf`, `.doc`, or `.docx` file to drive case-specific questions.")
+        _up = st.file_uploader(
+            "Case file",
+            type=["txt", "md", "pdf", "doc", "docx"],
+            key="case_upload_file",
+            label_visibility="collapsed",
+            help="Uploaded text is used to generate case-specific interview questions.",
+        )
+        if _up is not None:
+            _txt = _extract_uploaded_case_text(_up)
+            if _txt:
+                st.session_state.custom_case_title = _up.name.rsplit(".", 1)[0]
+                st.session_state.custom_case_context = _txt[:8000]
+                st.success("Case uploaded. Click Start Interview to use this case.")
+        if st.session_state.get("custom_case_title"):
+            c1, c2 = st.columns([4, 1])
+            with c1:
+                st.info(f"Active uploaded case: **{st.session_state.custom_case_title}**")
+            with c2:
+                if st.button("Clear case", key="clear_uploaded_case_main", use_container_width=True):
+                    st.session_state.custom_case_title = ""
+                    st.session_state.custom_case_context = ""
+                    st.success("Uploaded case cleared.")
     if mode == "case" and st.session_state.get("custom_case_title"):
         st.info(f"Using uploaded case: **{st.session_state.get('custom_case_title')}**")
     st.markdown("""
