@@ -6,6 +6,7 @@ Set API_URL in the environment when the API is not on localhost (e.g. cloud depl
 """
 
 import base64
+import io
 import json
 import os
 import re
@@ -20,6 +21,16 @@ try:
     from streamlit_javascript import st_javascript
 except ImportError:
     st_javascript = None
+
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
+
+try:
+    from docx import Document as DocxDocument
+except ImportError:
+    DocxDocument = None
 
 API_URL = os.environ.get("API_URL", "http://localhost:8000").rstrip("/")
 ENABLE_EMBED_BRIDGE = os.environ.get("ENABLE_EMBED_BRIDGE", "0").strip().lower() in {
@@ -185,6 +196,53 @@ def _clean_display_text(s: str) -> str:
     text = re.sub(r"[`]{2,}", "", text)
     text = re.sub(r"\s{2,}", " ", text).strip()
     return text
+
+
+def _extract_uploaded_case_text(uploaded_file) -> str:
+    """Best-effort text extraction for txt/md/pdf/doc/docx uploads."""
+    if uploaded_file is None:
+        return ""
+    name = (uploaded_file.name or "").lower()
+    raw = uploaded_file.getvalue()
+    if not raw:
+        return ""
+
+    if name.endswith(".txt") or name.endswith(".md"):
+        return raw.decode("utf-8", errors="ignore").strip()
+
+    if name.endswith(".pdf"):
+        if PdfReader is None:
+            st.warning("PDF support requires `pypdf`. Please install and redeploy.")
+            return ""
+        try:
+            reader = PdfReader(io.BytesIO(raw))
+            text = "\n".join([(page.extract_text() or "") for page in reader.pages])
+            return text.strip()
+        except Exception:
+            st.warning("Could not extract text from this PDF. Try a text-based PDF.")
+            return ""
+
+    if name.endswith(".docx"):
+        if DocxDocument is None:
+            st.warning("DOCX support requires `python-docx`. Please install and redeploy.")
+            return ""
+        try:
+            doc = DocxDocument(io.BytesIO(raw))
+            text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            return text.strip()
+        except Exception:
+            st.warning("Could not read this DOCX file.")
+            return ""
+
+    if name.endswith(".doc"):
+        # Legacy .doc is binary; this is best-effort extraction only.
+        text = raw.decode("utf-8", errors="ignore").strip()
+        if len(text) < 40:
+            st.warning("Legacy .doc parsing is limited. Prefer PDF, DOCX, TXT, or MD.")
+            return ""
+        return text
+
+    return raw.decode("utf-8", errors="ignore").strip()
 
 
 def _render_page_header(mode=None) -> None:
@@ -368,8 +426,8 @@ st.markdown("""
         --text-primary: #0f172a;
         --text-secondary: #475569;
         --text-muted: #64748b;
-        --accent: #1d4ed8;
-        --accent-2: #5b21b6;
+        --accent: #059669;
+        --accent-2: #047857;
         --success: #15803d;
         --warning: #c2410c;
         --border-subtle: #e2e8f0;
@@ -429,13 +487,13 @@ st.markdown("""
         height: 14px;
         width: 100%;
         border-radius: 999px;
-        background: linear-gradient(90deg, #2563eb 0%, #3b82f6 32%, #7c3aed 68%, #f59e0b 100%);
+        background: linear-gradient(90deg, #059669 0%, #10b981 38%, #14b8a6 72%, #84cc16 100%);
         box-shadow: 0 3px 12px rgba(37, 99, 235, 0.32);
         margin-bottom: 0.35rem;
     }
     .app-header-card {
         background: rgba(255, 255, 255, 0.92);
-        border: 1px solid #dbeafe;
+        border: 1px solid #a7f3d0;
         border-radius: 12px;
         padding: 0.8rem 1rem 0.65rem;
         box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
@@ -466,16 +524,16 @@ st.markdown("""
         margin-top: 0.35rem;
         font-size: 0.82rem;
         color: #475569;
-        border-left: 2px solid #bfdbfe;
+        border-left: 2px solid #6ee7b7;
         padding-left: 0.55rem;
         line-height: 1.35;
         max-width: 46rem;
     }
     .app-chip {
         display: inline-block;
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        color: #1e3a8a;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
         border-radius: 999px;
         padding: 0.25rem 0.58rem;
         font-size: 0.72rem;
@@ -533,8 +591,8 @@ st.markdown("""
     }
     .active-mode-card {
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid #dbeafe;
-        border-left: 3px solid #3b82f6;
+        border: 1px solid #a7f3d0;
+        border-left: 3px solid #10b981;
         border-radius: 10px;
         padding: 0.6rem 0.7rem;
         margin: -0.15rem 0 1rem 0;
@@ -544,7 +602,7 @@ st.markdown("""
         font-size: 0.68rem;
         font-weight: 700;
         letter-spacing: 0.1em;
-        color: #1d4ed8;
+        color: #047857;
         text-transform: uppercase;
         margin: 0 0 0.25rem 0;
     }
@@ -576,9 +634,9 @@ st.markdown("""
         padding: 1.25rem 1.35rem 1.35rem 1.35rem;
         border-radius: 12px;
         margin: 0;
-        border: 1px solid rgba(59, 130, 246, 0.22);
-        border-left: 5px solid #2563eb;
-        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.28);
+        border-left: 5px solid #059669;
+        box-shadow: 0 4px 16px rgba(5, 150, 105, 0.12);
         font-size: 1.0rem;
         line-height: 1.65;
         width: 100%;
@@ -593,15 +651,15 @@ st.markdown("""
         padding: 1.15rem 1.35rem;
         border-radius: 12px;
         margin: 0;
-        border: 1px solid #e8e5ff;
-        border-left: 5px solid #7c3aed;
-        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.08);
+        border: 1px solid #d1fae5;
+        border-left: 5px solid #059669;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.1);
         line-height: 1.6;
         font-size: 0.98rem;
     }
     .scenario-box .scenario-lead {
         font-weight: 700;
-        color: #5b21b6;
+        color: #047857;
         margin-right: 0.35rem;
     }
     .answer-workspace {
@@ -657,7 +715,7 @@ st.markdown("""
         line-height: 1.6;
         box-shadow: 0 8px 16px rgba(2, 6, 23, 0.08);
     }
-    .dimension-item strong { color: #1d4ed8; }
+    .dimension-item strong { color: #047857; }
     /* Desktop layout: use horizontal space */
     .main .block-container {
         max-width: 100%;
@@ -683,21 +741,21 @@ st.markdown("""
         width: 100%;
         border-radius: 999px;
         margin: 0.4rem 0 1.1rem 0;
-        background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 35%, #a78bfa 70%, #f59e0b 100%);
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset, 0 6px 18px rgba(59, 130, 246, 0.25);
+        background: linear-gradient(90deg, #10b981 0%, #059669 45%, #14b8a6 75%, #84cc16 100%);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset, 0 6px 18px rgba(5, 150, 105, 0.25);
     }
     /* Sidebar interview type: bold caps labels */
     section[data-testid="stSidebar"] div[role="radiogroup"] > label {
         background: #ffffff;
         border: 1px solid var(--border-subtle);
-        border-left: 3px solid #3b82f6;
+        border-left: 3px solid #10b981;
         border-radius: 8px;
         padding: 0.55rem 0.7rem;
         margin-bottom: 0.4rem;
         transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
-        border-color: #93c5fd;
+        border-color: #6ee7b7;
         background: #f8fafc;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label > div {
@@ -712,17 +770,17 @@ st.markdown("""
         color: #0f172a !important;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) {
-        background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%);
-        border-color: #93c5fd;
-        border-left-color: #2563eb;
-        box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 6px 16px rgba(37, 99, 235, 0.12);
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border-color: #6ee7b7;
+        border-left-color: #059669;
+        box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 6px 16px rgba(5, 150, 105, 0.15);
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) > div,
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) * {
-        color: #1e3a8a !important;
+        color: #065f46 !important;
     }
     section[data-testid="stSidebar"] input[type="radio"] {
-        accent-color: #2563eb !important;
+        accent-color: #059669 !important;
         opacity: 1 !important;
         visibility: visible !important;
     }
@@ -736,8 +794,8 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25) !important;
     }
     section[data-testid="stSidebar"] [data-baseweb="checkbox"] input:checked + div {
-        background: #2563eb !important;
-        border-color: #1d4ed8 !important;
+        background: #059669 !important;
+        border-color: #047857 !important;
     }
     section[data-testid="stSidebar"] [data-baseweb="checkbox"] input:checked + div::before {
         background: #ffffff !important;
@@ -766,11 +824,11 @@ st.markdown("""
     div[data-testid="stButton"] button[data-testid="baseButton-primary"],
     .stButton button[kind="primary"],
     .stButton button[data-testid="baseButton-primary"] {
-        background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%) !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         color: #ffffff !important;
-        border: 1px solid #1e40af !important;
+        border: 1px solid #065f46 !important;
         text-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
         font-weight: 700 !important;
     }
     div[data-testid="stButton"] button[kind="primary"] *,
@@ -784,15 +842,15 @@ st.markdown("""
     div[data-testid="stButton"] button[data-testid="baseButton-primary"]:hover,
     .stButton button[kind="primary"]:hover,
     .stButton button[data-testid="baseButton-primary"]:hover {
-        background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%) !important;
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
         color: #ffffff !important;
-        border-color: #1e3a8a !important;
+        border-color: #065f46 !important;
     }
     div[data-testid="stButton"] button[kind="primary"]:focus-visible,
     div[data-testid="stButton"] button[data-testid="baseButton-primary"]:focus-visible,
     .stButton button[kind="primary"]:focus-visible,
     .stButton button[data-testid="baseButton-primary"]:focus-visible {
-        outline: 3px solid rgba(59, 130, 246, 0.45) !important;
+        outline: 3px solid rgba(16, 185, 129, 0.45) !important;
         outline-offset: 2px;
     }
     .stButton > button:active,
@@ -805,8 +863,8 @@ st.markdown("""
     .stButton > button:disabled,
     .stButton button[kind="primary"]:disabled,
     .stButton button[data-testid="baseButton-primary"]:disabled {
-        background: linear-gradient(135deg, #60a5fa 0%, #6366f1 100%) !important;
-        border-color: #3b82f6 !important;
+        background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+        border-color: #059669 !important;
         color: #ffffff !important;
         opacity: 0.9 !important;
     }
@@ -818,12 +876,12 @@ st.markdown("""
         border-radius: 10px !important;
         min-height: 180px !important;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) inset;
-        caret-color: #1d4ed8 !important;
+        caret-color: #059669 !important;
         cursor: text !important;
     }
     .stTextArea textarea:focus {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+        border-color: #059669 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
     }
     [data-testid="stExpander"] details {
         background: transparent !important;
@@ -841,7 +899,7 @@ st.markdown("""
         fill: #0f172a !important;
     }
 
-    /* Accessibility: enforce white text on blue/purple UI surfaces */
+    /* Accessibility: enforce white text on emerald accent surfaces */
     .app-chip,
     .active-mode-title,
     .new-question-banner,
@@ -864,32 +922,32 @@ st.markdown("""
         fill: #ffffff !important;
     }
     .app-chip {
-        background: linear-gradient(135deg, #1d4ed8 0%, #3730a3 100%) !important;
-        border-color: #1e3a8a !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        border-color: #065f46 !important;
     }
     .active-mode-title {
-        background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
         border-radius: 999px;
         display: inline-block;
         padding: 0.2rem 0.55rem;
     }
     .new-question-banner {
-        background: linear-gradient(135deg, #4338ca 0%, #5b21b6 100%) !important;
-        border-color: #3730a3 !important;
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
+        border-color: #065f46 !important;
     }
     .question-box {
-        background: linear-gradient(145deg, #1d4ed8 0%, #2563eb 55%, #4338ca 100%) !important;
-        border-color: #1e40af !important;
-        border-left-color: #1e3a8a !important;
+        background: linear-gradient(145deg, #047857 0%, #059669 55%, #10b981 100%) !important;
+        border-color: #065f46 !important;
+        border-left-color: #064e3b !important;
         text-shadow: 0 1px 0 rgba(0,0,0,0.2);
     }
     .new-question-banner {
-        background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-        border: 1px solid #ddd6fe;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border: 1px solid #6ee7b7;
         border-radius: 10px;
         padding: 0.65rem 0.95rem;
         margin: 0 0 0.85rem 0;
-        color: #4c1d95;
+        color: #065f46;
         font-size: 0.88rem;
         font-weight: 500;
         line-height: 1.45;
@@ -957,16 +1015,13 @@ show_embed_tools = st.sidebar.toggle("Show interactive embed", value=False, key=
 if mode == "case":
     st.sidebar.markdown('<p class="sidebar-section-label">Case Upload</p>', unsafe_allow_html=True)
     _up = st.sidebar.file_uploader(
-        "Upload case study (.txt or .md)",
-        type=["txt", "md"],
+        "Upload case study (.txt, .md, .pdf, .doc, .docx)",
+        type=["txt", "md", "pdf", "doc", "docx"],
         key="case_upload_file",
         help="Uploaded text is used to generate case-specific interview questions.",
     )
     if _up is not None:
-        try:
-            _txt = _up.getvalue().decode("utf-8", errors="ignore").strip()
-        except Exception:
-            _txt = ""
+        _txt = _extract_uploaded_case_text(_up)
         if _txt:
             st.session_state.custom_case_title = _up.name.rsplit(".", 1)[0]
             st.session_state.custom_case_context = _txt[:8000]
