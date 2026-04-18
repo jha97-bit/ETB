@@ -239,6 +239,8 @@ def _clear_interview_progress() -> None:
     st.session_state.highlight_answer_for_new_question = False
     st.session_state.show_new_question_toast = False
     st.session_state.expand_answer_template = False
+    st.session_state.custom_case_title = ""
+    st.session_state.custom_case_context = ""
     if "_last_embed_hash" in st.session_state:
         del st.session_state["_last_embed_hash"]
 
@@ -952,6 +954,30 @@ st.sidebar.markdown('<p class="sidebar-section-label">Advanced tools</p>', unsaf
 show_voice_tools = st.sidebar.toggle("Show voice chat tools", value=False, key="show_voice_tools")
 show_embed_tools = st.sidebar.toggle("Show interactive embed", value=False, key="show_embed_tools")
 
+if mode == "case":
+    st.sidebar.markdown('<p class="sidebar-section-label">Case Upload</p>', unsafe_allow_html=True)
+    _up = st.sidebar.file_uploader(
+        "Upload case study (.txt or .md)",
+        type=["txt", "md"],
+        key="case_upload_file",
+        help="Uploaded text is used to generate case-specific interview questions.",
+    )
+    if _up is not None:
+        try:
+            _txt = _up.getvalue().decode("utf-8", errors="ignore").strip()
+        except Exception:
+            _txt = ""
+        if _txt:
+            st.session_state.custom_case_title = _up.name.rsplit(".", 1)[0]
+            st.session_state.custom_case_context = _txt[:8000]
+            st.sidebar.success("Case uploaded. Start interview to ask questions on this case.")
+    if st.session_state.get("custom_case_title"):
+        st.sidebar.caption(f"Active uploaded case: {st.session_state.custom_case_title}")
+        if st.sidebar.button("Clear uploaded case", key="clear_uploaded_case"):
+            st.session_state.custom_case_title = ""
+            st.session_state.custom_case_context = ""
+            st.sidebar.success("Uploaded case cleared.")
+
 # Initialize session state
 if "questions" not in st.session_state:
     st.session_state.questions = []
@@ -981,6 +1007,10 @@ if "show_voice_panel" not in st.session_state:
     st.session_state.show_voice_panel = False
 if "last_interview_mode" not in st.session_state:
     st.session_state.last_interview_mode = mode
+if "custom_case_title" not in st.session_state:
+    st.session_state.custom_case_title = ""
+if "custom_case_context" not in st.session_state:
+    st.session_state.custom_case_context = ""
 
 # If user changes interview type during an active session, reset so questions match the selection.
 if st.session_state.get("started") and mode != st.session_state.last_interview_mode:
@@ -1038,6 +1068,8 @@ else:
 # Main flow
 if not st.session_state.started:
     st.subheader("Get Started")
+    if mode == "case" and st.session_state.get("custom_case_title"):
+        st.info(f"Using uploaded case: **{st.session_state.get('custom_case_title')}**")
     st.markdown("""
     1. **Click "Start Interview"** below to get your first question.
     2. **Read the question** and think about your answer.
@@ -1053,6 +1085,8 @@ if not st.session_state.started:
                     "session_id": _api_session_id(mode),
                     "user_id": "user",
                     "mode": mode,
+                    "case_title": st.session_state.get("custom_case_title") or None,
+                    "case_context": st.session_state.get("custom_case_context") or None,
                 },
                 timeout=10,
             )
@@ -1226,6 +1260,8 @@ section.main .stTextArea textarea {
                                 "mode": mode,
                                 "last_question": st.session_state.current_question,
                                 "last_answer": answer,
+                                "case_title": st.session_state.get("custom_case_title") or None,
+                                "case_context": st.session_state.get("custom_case_context") or None,
                             },
                             timeout=15,
                         )
