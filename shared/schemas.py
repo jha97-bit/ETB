@@ -31,8 +31,6 @@ class AskQuestionRequest(BaseModel):
     last_question: Optional[str] = None
     target_role: Optional[str] = None
     conversation_history: Optional[list[QAPair]] = None
-    case_title: Optional[str] = None
-    case_context: Optional[str] = None
 
 
 class AskQuestionResponse(BaseModel):

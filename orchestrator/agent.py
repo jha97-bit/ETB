@@ -86,16 +86,6 @@ class OrchestratorAgent:
 
         # First question: use question bank
         if not request.last_answer and not request.conversation_history:
-            if mode == InterviewMode.CASE and (request.case_context or "").strip():
-                question = self._generate_uploaded_case_question(request)
-                hint = f"Scenario: {(request.case_context or '').strip()[:700]}"
-                return AskQuestionResponse(
-                    question=question,
-                    mode=mode,
-                    is_followup=False,
-                    session_id=request.session_id,
-                    hint=hint,
-                )
             question, is_followup = self._question_bank.get_question(
                 request.session_id, mode, is_followup=False
             )
@@ -157,11 +147,6 @@ class OrchestratorAgent:
             "Generate exactly ONE follow-up question to probe deeper based on the candidate's answer. "
             "Only output the question, nothing else."
         )
-        if request.mode == InterviewMode.CASE and (request.case_context or "").strip():
-            input_text += (
-                f"\n\nCase context (user-uploaded): {(request.case_context or '').strip()[:1800]}\n"
-                "Keep the follow-up tied to this specific case context."
-            )
 
         try:
             messages = self._prompt.format_messages(
@@ -178,39 +163,3 @@ class OrchestratorAgent:
                 request.session_id, request.mode, is_followup=True
             )
             return question
-
-    def _generate_uploaded_case_question(self, request: AskQuestionRequest) -> str:
-        """Generate first question from user-uploaded case context."""
-        title = (request.case_title or "uploaded case").strip()
-        context = (request.case_context or "").strip()
-        if not self._llm:
-            return (
-                f"For the {title} case, what is your problem framing, what key metrics will you prioritize, "
-                "and what initial hypotheses would you test first?"
-            )
-        try:
-            system = SYSTEM_PROMPT.format(
-                mode=request.mode.value,
-                target_role=request.target_role or "General role",
-            )
-            prompt = (
-                "You are given a user-uploaded business case context. Ask exactly ONE opening interview question "
-                "that is specific to this case and encourages structured analysis. Output only the question.\n\n"
-                f"Case title: {title}\n"
-                f"Case context: {context[:2200]}"
-            )
-            messages = self._prompt.format_messages(
-                mode=request.mode.value,
-                target_role=request.target_role or "General role",
-                history=[],
-                input=prompt,
-            )
-            response = self._llm.invoke(messages)
-            text = response.content.strip() if hasattr(response, "content") else str(response)
-            return text.split("\n")[0].strip() or (
-                f"For the {title} case, how would you structure your analysis and recommendation?"
-            )
-        except Exception:
-            return (
-                f"For the {title} case, how would you structure your analysis and recommendation?"
-            )
