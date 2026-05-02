@@ -196,7 +196,13 @@ def _render_page_header(mode=None) -> None:
         <div class="app-header-shell">
           <div class="app-header-topline"></div>
           <div class="app-header-card">
-            <div class="app-header-title">Mock Interview Platform</div>
+            <div class="app-header-brand">
+              <div class="app-logo-mark" aria-label="MIP logo">MIP</div>
+              <div class="app-logo-text">
+                <div class="app-header-title">MIP</div>
+                <div class="app-header-title-sub">Mock Interview Platform</div>
+              </div>
+            </div>
             <div class="app-header-subtitle">Practice realistic interview questions, get structured feedback, and track improvement.</div>
             <div class="app-header-meta">
               <span class="app-chip">Mode: {mode_label}</span>
@@ -424,12 +430,12 @@ st.markdown("""
         margin: -0.65rem 0 0.45rem 0;
     }
     .app-header-topline {
-        height: 14px;
+        height: 18px;
         width: 100%;
         border-radius: 999px;
         background: linear-gradient(90deg, #2563eb 0%, #3b82f6 32%, #7c3aed 68%, #f59e0b 100%);
         box-shadow: 0 3px 12px rgba(37, 99, 235, 0.32);
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.45rem;
     }
     .app-header-card {
         background: rgba(255, 255, 255, 0.92);
@@ -439,11 +445,45 @@ st.markdown("""
         box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
     }
     .app-header-title {
-        font-size: 1.45rem;
+        font-size: 1.52rem;
         font-weight: 800;
         letter-spacing: -0.02em;
         color: #0f172a;
-        margin: 0 0 0.15rem 0;
+        margin: 0;
+    }
+    .app-header-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        margin: 0 0 0.2rem 0;
+    }
+    .app-logo-mark {
+        min-width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.98rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #ffffff;
+        background: linear-gradient(135deg, #059669 0%, #14b8a6 55%, #84cc16 100%);
+        border: 1px solid rgba(5, 150, 105, 0.45);
+        box-shadow: 0 8px 18px rgba(5, 150, 105, 0.2);
+    }
+    .app-logo-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.05rem;
+    }
+    .app-header-title-sub {
+        font-size: 0.76rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #047857;
+        margin: 0;
     }
     .app-header-subtitle {
         font-size: 0.92rem;
@@ -677,7 +717,7 @@ st.markdown("""
         border: 1px solid #d1d9e6;
     }
     .header-ribbon {
-        height: 12px;
+        height: 16px;
         width: 100%;
         border-radius: 999px;
         margin: 0.4rem 0 1.1rem 0;
